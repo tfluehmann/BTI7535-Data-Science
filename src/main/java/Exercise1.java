@@ -1,9 +1,7 @@
-import com.panayotis.gnuplot.JavaPlot;
-
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,17 +12,15 @@ public class Exercise1 {
     private static ArrayList<String> words;
 
     public static void main(String [] args) {
-        JavaPlot p = new JavaPlot();
-
-        p.addPlot("sin(x)");
-
-        p.plot();
-
-
-        String content = getFile("/Users/tgdflto1/Google Drive/FH/7. Semester/Data Science/Übungen/pg1524.txt");
+        String content = getFile("pg1524.txt").replaceAll("\\r|\\n","");
         words = new ArrayList<>(Arrays.asList(content.split(" ")));
-        words.forEach((word) -> cleanedWords.add(tokenize(word)));
-
+        List<String> stopWords = Arrays.asList(getFile("stopwords_en.txt").split("\\r|\\n"));
+        words.forEach((word) -> {
+            String tokenizedWord = tokenize(word);
+            if(stopWords.indexOf(tokenizedWord) == -1 && tokenizedWord.length() > 0){
+                cleanedWords.add(tokenizedWord);
+            }
+        });
         stringIntegerHashMap = frequency(stringIntegerHashMap, cleanedWords);
         stringIntegerHashMap = sort(stringIntegerHashMap);
         System.out.println(stringIntegerHashMap);
@@ -43,9 +39,10 @@ public class Exercise1 {
     }
 
     private static String getFile(String path){
+        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
         try {
-            return new String(Files.readAllBytes(
-                    Paths.get(path))).replaceAll("\\r|\\n","");
+            File file = new File(classLoader.getResource(path).getFile());
+            return new String(Files.readAllBytes(file.toPath()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -62,7 +59,7 @@ public class Exercise1 {
                 replaceAll("\\*", "").
                 replaceAll("\\.", "").
                 replaceAll("]", "").
-                replaceAll("\\[", "").trim();
+                replaceAll("\\[", "").trim().toLowerCase();
     }
 
     private static Map<String, Integer> sort(Map<String, Integer> hash) {
